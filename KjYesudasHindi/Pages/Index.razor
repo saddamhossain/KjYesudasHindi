@@ -1,0 +1,401 @@
+﻿@page "/"
+@inject ISong _ISong
+@inject IJSRuntime _IJSRuntime
+
+    <style>
+        .footer {
+            position: fixed;
+            bottom: 0;
+        }
+    </style>
+
+    <div class="margin-class">
+        <div class="row">
+
+            <div class="column1">
+
+                <div>
+                    <h4>
+                        <span class="badge badge-primary">
+                            <i class="fa fa-music" aria-hidden="true"></i>&nbsp;
+                            Padmavibhushan Dr. K.J Yesudas Hindi Songs Tracker By <a href="http://saddamhossain.net" target="_blank" style="color:white"> Md. Saddam Hossain Rana </a>
+                        </span>
+                    </h4>
+                </div>
+
+                <div class="column2">
+                    <h5><span class="badge badge-secondary">Choose an Year (Total @yearsCount years) </span></h5>
+                    <select class="form-control" @bind="@Filter_Year" @bind:event="oninput" @onchange="(()=> On_Change_Filter_Year())">
+                        <option value="All"> @InitialText (@all_songs_count)</option>
+                        @if (yearsGroupedViewModel != null)
+                        {
+                            foreach (var item in yearsGroupedViewModel)
+                            {
+                                <option value="@item.Year"> @item.Year (@item.TotalCount) </option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="column2">
+                    <h5><span class="badge badge-secondary">Choose a Movie (Total @moviesCount movies)</span></h5>
+                    <select class="form-control" @bind="@Filter_Movie" @bind:event="oninput" @onchange="(()=> On_Change_Filter_Movie())">
+                        <option value="All"> @InitialText (@all_songs_count)</option>
+                        @if (moviesGroupedViewModel != null)
+                        {
+                            foreach (var item in moviesGroupedViewModel)
+                            {
+                                <option value="@item.MovieName"> @item.MovieName (@item.TotalCount) </option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="column2">
+                    <h5> <span class="badge badge-secondary">Choose a Music Director (Total @directorsCount directors) </span></h5>
+                    <select class="form-control" @bind="@Filter_Music_Director" @bind:event="oninput" @onchange="(()=> On_Change_Filter_Music_Director())">
+                        <option value="All"> @InitialText (@all_songs_count)</option>
+                        @if (directorsGroupedViewModel != null)
+                        {
+                            foreach (var item in directorsGroupedViewModel)
+                            {
+                                <option value="@item.MusicDirectorName"> @item.MusicDirectorName (@item.TotalCount) </option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="column2">
+                    <h5><span class="badge badge-secondary">Choose a Lyricist (Total @lyricistsCount lyricists)</span></h5>
+                    <select class="form-control" @bind="@Filter_Lyricist" @bind:event="oninput" @onchange="(()=> On_Change_Filter_Lyricist())">
+                        <option value="All"> @InitialText (@all_songs_count)</option>
+                        @if (lyricistsGroupedViewModel != null)
+                        {
+                            foreach (var item in lyricistsGroupedViewModel)
+                            {
+                                <option value="@item.LyricistName"> @item.LyricistName (@item.TotalCount) </option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="column2">
+                    <h5><span class="badge badge-secondary">Choose a Genre (Total @genresCount genres)</span></h5>
+                    <select class="form-control" @bind="@Filter_Genre" @bind:event="oninput" @onchange="(()=> On_Change_Filter_Genre())">
+                        <option value="All"> @InitialText (@all_songs_count)</option>
+                        @if (genresGroupedViewModel != null)
+                        {
+                            foreach (var item in genresGroupedViewModel)
+                            {
+                                <option value="@item.GenreName"> @item.GenreName (@item.TotalCount) </option>
+                            }
+                        }
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="column1">
+                <img src="images/Yesudas.jpg" alt="Image" height="270px" style="z-index:-1; padding-left: 50px; padding-top: 10px;" />
+
+                @if (is_current_song_embeded)
+                {
+                    <iframe width="460" height="260" src="@Url_Link" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position:absolute;left:840px;top:20px;"></iframe>
+                }
+            </div>
+
+        </div>
+    </div>
+
+    <div class="row margin-class-0">
+
+        <div class="col-3">
+            <h5><span class="badge badge-info">Selected Songs Count : @selectedSong </span></h5>
+        </div>
+
+        <div class="col-4" style="padding-left: 30px;">
+            <h5>
+                <span class="badge badge-info">
+                    Total songs added to this Project : @addedSongsCount / @all_songs_count
+                </span>
+            </h5>
+        </div>
+
+    </div>
+
+    <div class="row margin-class-0">
+        <div class="col-12">
+
+            <table class="table table-hover">
+                <thead>
+                    <tr class="d-flex table-warning">
+                        <th class="col-1">Year</th>
+                        <th class="col-4">Song</th>
+                        <th class="col-2">Movie</th>
+                        <th class="col-2">Music</th>
+                        <th class="col-2">Lyricist</th>
+                        <th class="col-1">Play</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in song_list)
+                    {
+                        <tr class="d-flex table-primary">
+                            <td class="col-1">@item.Year</td>
+                            <td class="col-4">@item.SongName</td>
+                            <td class="col-2">@item.Movie</td>
+                            <td class="col-2">@item.Music</td>
+                            <td class="col-2">@item.Lyrics</td>
+                            @if (item.YoutubeLink != "" && item.IsEmbedAllowed == true)
+                            {
+                                <td class="col-1"><button type="button" class="btn btn-success" @onclick="(()=> PlayYoutube(item.YoutubeLink, true))">Play </button></td>
+                            }
+
+                            @if (item.YoutubeLink != "" && item.IsEmbedAllowed == false)
+                            {
+                                <td class="col-1"><button type="button" class="btn btn-warning" @onclick="(()=> PlayYoutube(item.YoutubeLink, false))"> Play</button></td>
+                            }
+
+                            @if (item.YoutubeLink == "")
+                            {
+                                <td class="col-1"><button type="button" class="btn btn-secondary" @onclick="(()=> PlayYoutube(item.YoutubeLink, false))">Play</button> </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+    <p class="footer"> <strong> Disclaimer: </strong>   The information in this site taken from various sources. We are not claiming 100% accuracy. All YouTube videos are just embedded in this site. We do not have any copyright on them, the credit is given to the respective YouTube video owners. </p>
+
+    @code{
+        #region variable declare
+        protected string InitialText { get; set; } = "All";
+
+        protected string Filter_Year { set; get; }
+        protected string Filter_Movie { set; get; }
+        protected string Filter_Music_Director { set; get; }
+        protected string Filter_Lyricist { set; get; }
+        protected string Filter_Genre { set; get; }
+
+        protected string searchText { set; get; }
+
+        protected List<string> songs { set; get; }
+        protected IEnumerable<Song> song_list { set; get; }
+
+        protected string selectedMovie { set; get; }
+        protected string selectedDirector { set; get; }
+        protected string selectedYear { set; get; }
+        protected string selectedCoSinger { set; get; }
+        protected string selectedLyricist { set; get; }
+        protected string selectedGenre { set; get; }
+
+        protected int selectedSong { set; get; }
+
+        protected int moviesCount { set; get; }
+        protected int directorsCount { set; get; }
+        protected int yearsCount { set; get; }
+        protected int coSingersCount { set; get; }
+        protected int lyricistsCount { set; get; }
+        protected int genresCount { set; get; }
+
+        protected int all_songs_count { set; get; }
+        protected int addedSongsCount { set; get; }
+
+        protected string All { set; get; }
+
+        protected IEnumerable<YearsGroupedViewModel> yearsGroupedViewModel = new List<YearsGroupedViewModel>();
+        protected IEnumerable<CoSingersGroupedViewModel> coSingersGroupedViewModel = new List<CoSingersGroupedViewModel>();
+        protected IEnumerable<DirectorsGroupedViewModel> directorsGroupedViewModel = new List<DirectorsGroupedViewModel>();
+        protected IEnumerable<GenresGroupedViewModel> genresGroupedViewModel = new List<GenresGroupedViewModel>();
+        protected IEnumerable<LyricistsGroupedViewModel> lyricistsGroupedViewModel = new List<LyricistsGroupedViewModel>();
+        protected IEnumerable<MoviesGroupedViewModel> moviesGroupedViewModel = new List<MoviesGroupedViewModel>();
+
+        protected bool is_current_song_embeded { set; get; }
+        protected string Url_Link { set; get; }
+        #endregion
+
+        protected override Task OnInitializedAsync()
+        {
+            song_list = _ISong.GetSongs().ToList();
+            moviesCount = _ISong.GetSongs().GroupBy(s => s.Movie).Count();
+            directorsCount = _ISong.GetSongs().GroupBy(s => s.Music).Count();
+            yearsCount = _ISong.GetSongs().GroupBy(s => s.Year).Count();
+            lyricistsCount = _ISong.GetSongs().GroupBy(s => s.Lyrics).Count();
+            genresCount = _ISong.GetSongs().GroupBy(s => s.Genre).Count();
+
+            all_songs_count = _ISong.GetSongs().Count();
+            selectedSong = _ISong.GetSongs().Count();
+            addedSongsCount = _ISong.GetSongs().Where(s => s.YoutubeLink != "").Count();
+
+
+            yearsGroupedViewModel = from s in _ISong.GetSongs()
+                                    group s by new { s.Year } into g
+                                    orderby g.Key.Year
+                                    select new YearsGroupedViewModel { Year = g.Key.Year, TotalCount = g.Count() };
+
+
+            moviesGroupedViewModel = _ISong.GetSongs().GroupBy(s => new { s.Movie }).OrderBy(g => g.Key.Movie).Select(g => new MoviesGroupedViewModel
+            {
+                MovieName = g.Key.Movie,
+                TotalCount = g.Count()
+            });
+
+            directorsGroupedViewModel = _ISong.GetSongs().GroupBy(s => new { s.Music }).OrderBy(g => g.Key.Music).Select(g => new DirectorsGroupedViewModel
+            {
+                MusicDirectorName = g.Key.Music,
+                TotalCount = g.Count()
+            });
+
+            lyricistsGroupedViewModel = _ISong.GetSongs().GroupBy(s => new { s.Lyrics }).OrderBy(g => g.Key.Lyrics).Select(g => new LyricistsGroupedViewModel
+            {
+                LyricistName = g.Key.Lyrics,
+                TotalCount = g.Count()
+            });
+
+            genresGroupedViewModel = _ISong.GetSongs().GroupBy(s => new { s.Genre }).OrderBy(g => g.Key.Genre).Select(g => new GenresGroupedViewModel
+            {
+                GenreName = g.Key.Genre,
+                TotalCount = g.Count()
+            });
+
+            return base.OnInitializedAsync();
+        }
+
+        protected override async Task OnParametersSetAsync()
+        {
+            await base.OnParametersSetAsync();
+        }
+
+        protected void On_Change_Filter_Year()
+        {
+            if (Filter_Year == "All")
+            {
+                song_list = _ISong.GetSongs();
+                selectedSong = _ISong.GetSongs().Count();
+            }
+            else
+            {
+                var selected_year = Convert.ToInt32(Filter_Year);
+                song_list = _ISong.GetSongByYear(selected_year);
+                selectedSong = _ISong.GetSongByYear(selected_year).Count();
+            }
+
+            Filter_Movie = InitialText;
+            Filter_Music_Director = InitialText;
+            Filter_Lyricist = InitialText;
+            Filter_Genre = InitialText;
+            is_current_song_embeded = false;
+            StateHasChanged();
+        }
+
+        protected void On_Change_Filter_Movie()
+        {
+            if (Filter_Movie == "All")
+            {
+                song_list = _ISong.GetSongs();
+                selectedSong = _ISong.GetSongs().Count();
+            }
+            else
+            {
+                var selected_movie = Filter_Movie;
+                song_list = _ISong.GetSongByMovieName(selected_movie);
+                selectedSong = _ISong.GetSongByMovieName(selected_movie).Count();
+            }
+
+            Filter_Year = InitialText;
+            Filter_Music_Director = InitialText;
+            Filter_Lyricist = InitialText;
+            Filter_Genre = InitialText;
+            is_current_song_embeded = false;
+            StateHasChanged();
+        }
+
+        protected void On_Change_Filter_Music_Director()
+        {
+            if (Filter_Music_Director == "All")
+            {
+                song_list = _ISong.GetSongs();
+                selectedSong = _ISong.GetSongs().Count();
+            }
+            else
+            {
+                var selected_music_director = Filter_Music_Director;
+                song_list = _ISong.GetSongByMusicDirector(selected_music_director);
+                selectedSong = _ISong.GetSongByMusicDirector(selected_music_director).Count();
+            }
+
+            Filter_Year = InitialText;
+            Filter_Movie = InitialText;
+            Filter_Lyricist = InitialText;
+            Filter_Genre = InitialText;
+            is_current_song_embeded = false;
+            StateHasChanged();
+        }
+
+        protected void On_Change_Filter_Lyricist()
+        {
+            if (Filter_Lyricist == "All")
+            {
+                song_list = _ISong.GetSongs();
+                selectedSong = _ISong.GetSongs().Count();
+            }
+            else
+            {
+                var selected_lyricist = Filter_Lyricist;
+                song_list = _ISong.GetSongByLyricist(selected_lyricist);
+                selectedSong = _ISong.GetSongByLyricist(selected_lyricist).Count();
+            }
+
+            Filter_Year = InitialText;
+            Filter_Movie = InitialText;
+            Filter_Music_Director = InitialText;
+            Filter_Genre = InitialText;
+            is_current_song_embeded = false;
+            StateHasChanged();
+        }
+
+        protected void On_Change_Filter_Genre()
+        {
+            if (Filter_Genre == "All")
+            {
+                song_list = _ISong.GetSongs();
+                selectedSong = _ISong.GetSongs().Count();
+            }
+            else
+            {
+                var selected_genre = Filter_Genre;
+                song_list = _ISong.GetSongByGenre(selected_genre);
+                selectedSong = _ISong.GetSongByGenre(selected_genre).Count();
+            }
+
+            Filter_Year = InitialText;
+            Filter_Movie = InitialText;
+            Filter_Music_Director = InitialText;
+            Filter_Lyricist = InitialText;
+            is_current_song_embeded = false;
+            StateHasChanged();
+        }
+
+        protected void PlayYoutube(string YoutubeLink, bool isEmbedAllowed)
+        {
+            if (YoutubeLink == "")
+            {
+                return;
+            }
+            else if (isEmbedAllowed)
+            {
+                is_current_song_embeded = true;
+                Url_Link = @"https://www.youtube.com/embed/" + YoutubeLink + "?autoplay=1";
+                StateHasChanged();
+            }
+            else
+            {
+                Url_Link = @"https://www.youtube.com/watch?v=" + YoutubeLink + "";
+                _IJSRuntime.InvokeAsync<object>("open", Url_Link, "_blank");
+                StateHasChanged();
+            }
+        }
+    }
